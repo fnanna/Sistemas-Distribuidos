@@ -1,6 +1,5 @@
 import socket
 from datetime import datetime
-import time
 import threading
 
 HOST = "127.0.0.1"
@@ -10,7 +9,6 @@ def atende_cliente(conn,addr):
     with conn:
         print(f"Conectado por {addr}")
         dado = conn.recv(1024)
-        time.sleep(10) #para testar threads
         hora = datetime.now().strftime('%H:%M:%S')
         conn.sendall(hora.encode('utf-8')) #envia como bytes
 
