@@ -5,7 +5,7 @@ PORT = 8000
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as cliente:
     cliente.connect((HOST, PORT))
-    cliente.sendall(b"Hello, world")
-    data = cliente.recv(1024)
+    cliente.sendall(b"Hora")
+    dado = cliente.recv(1024)
+    print(f"Hora: {dado.decode('utf-8')}") 
 
-print(f"Received {data.decode('utf-8')}")
