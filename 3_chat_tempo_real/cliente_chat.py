@@ -25,12 +25,20 @@ def enviar(socket):
 def main():
     cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     cliente.connect((HOST, PORT))
-    print("Conectado. Digite sua mensagem: ")
+    #adiciona um apelido ao entrar  no chat:
+    apelido = ""
+    while not apelido:
+        apelido = input("Escolha seu apelido: ").strip()
+        if not apelido:
+            print("O apelido não pode ser vazio.")
+    cliente.sendall(apelido.encode("utf-8"))
 
-    #thread que fica recebendo as mensagens
+    print("Conectado. Digite sua mensagem: ")
+    #thread que fica recebendo as mensagens:
     t = threading.Thread(target=receber, args=(cliente,), daemon=True)
     t.start()
-    #envia as mensagen (rodando na thread principal)
+    
+    #envia as mensagens (rodando na thread principal):
     try:
         enviar(cliente)
     except (KeyboardInterrupt, EOFError): # crl c para encerrar

@@ -4,32 +4,43 @@ import threading
 HOST = "127.0.0.1"
 PORT = 8000
 
-clientes = []
+clientes = {}
 lock = threading.Lock() #usa em todos os lugares que altera clientes[] para tratar concorrencia
 
 def broadcast(mensagem, remetente):
     with lock:
-        destinatarios = list(clientes) #copia lista
+        destinatarios = list(clientes.keys()) #copia lista
+
     for c in destinatarios:
-        if c != remetente: #envia a mensagem para todos, menos o remetente
-            c.sendall(mensagem)
+        if c is remetente:
+            continue
+        c.sendall(mensagem.encode("utf-8"))
+    
 
 def conecta_cliente(conn,addr):
-    print(f"{addr} conectou")
+    apelido = conn.recv(1024).decode("utf-8").strip()
+    with lock: 
+        clientes[conn]=apelido
+
+    print(f"{addr} conectou ({apelido})")
+    broadcast(f"{apelido} entrou no chat", None)
+
     try:   
-        while True:
+        while True: #recebe as mensagens e envia por broadcast
             dado = conn.recv(1024)
             if not dado: # cliente desconectou
                 break
-            broadcast(dado, conn)
+            texto = dado.decode("utf-8")
+            broadcast(f"{apelido}: {texto}", conn)
+
     except ConnectionResetError: #conexao cai
         pass
     finally:
         with lock:
-            if conn in clientes:
-                clientes.remove(conn)
+            clientes.pop(conn, None)
         print(f"{addr} desconectou")
         conn.close()
+        broadcast(f"{apelido} saiu do chat", None)
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
@@ -40,8 +51,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
 
     while True:
         conn, addr = servidor.accept()
-        with lock: 
-            clientes.append(conn)
 
         t = threading.Thread(target=conecta_cliente, args=(conn, addr), daemon=True)
         t.start()
